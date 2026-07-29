@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
 
 
@@ -16,10 +16,10 @@ class AlgorithmPattern(StrEnum):
     GREEDY = "greedy"
 
 
-@dataclass
+@dataclass(frozen=True)
 class PatternMatch:
     """Represents a detected design pattern with confidence and evidence."""
 
     pattern: AlgorithmPattern
     confidence: float
-    evidence: list[str]
+    evidence: list[str] = field(default_factory=list)

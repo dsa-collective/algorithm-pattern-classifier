@@ -7,6 +7,10 @@ from algorithm_pattern_classifier.models.patterns import AlgorithmPattern, Patte
 class SlidingWindowDetector(BaseDetector):
     """Detector for the Sliding Window algorithmic design pattern."""
 
+    @property
+    def pattern(self) -> AlgorithmPattern:
+        return AlgorithmPattern.SLIDING_WINDOW
+
     def detect(self, code_ast: ast.AST) -> PatternMatch | None:
         """Detect evidence of the Sliding Window pattern in parsed AST.
 

@@ -7,6 +7,10 @@ from algorithm_pattern_classifier.models.patterns import AlgorithmPattern, Patte
 class DynamicProgrammingDetector(BaseDetector):
     """Detector for the Dynamic Programming algorithmic design pattern."""
 
+    @property
+    def pattern(self) -> AlgorithmPattern:
+        return AlgorithmPattern.DYNAMIC_PROGRAMMING
+
     def detect(self, code_ast: ast.AST) -> PatternMatch | None:
         """Detect evidence of the Dynamic Programming pattern in parsed AST.
 

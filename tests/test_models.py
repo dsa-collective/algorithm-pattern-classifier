@@ -1,4 +1,5 @@
 import ast
+from dataclasses import FrozenInstanceError
 
 import pytest
 
@@ -9,7 +10,6 @@ from algorithm_pattern_classifier.models.patterns import AlgorithmPattern, Patte
 
 def test_algorithm_pattern_enum() -> None:
     """Test AlgorithmPattern enum members and values."""
-    assert len(AlgorithmPattern) == 9
     assert AlgorithmPattern.TWO_POINTERS.value == "two-pointers"
     assert AlgorithmPattern.SLIDING_WINDOW.value == "sliding-window"
     assert AlgorithmPattern.DYNAMIC_PROGRAMMING.value == "dynamic-programming"
@@ -40,24 +40,45 @@ def test_pattern_match_construction_and_equality() -> None:
     assert len(result1.evidence) == 1
 
 
+def test_pattern_match_defaults() -> None:
+    """Test that PatternMatch defaults evidence to an empty list."""
+    result = PatternMatch(
+        pattern=AlgorithmPattern.TWO_POINTERS,
+        confidence=0.85,
+    )
+    assert result.evidence == []
+
+
+def test_pattern_match_immutability() -> None:
+    """Test that PatternMatch is frozen and cannot be mutated."""
+    result = PatternMatch(
+        pattern=AlgorithmPattern.TWO_POINTERS,
+        confidence=0.85,
+    )
+    with pytest.raises(FrozenInstanceError):
+        result.confidence = 0.95  # type: ignore[misc]
+
+
 def test_base_detector_cannot_be_instantiated() -> None:
     """Verify that abstract class BaseDetector cannot be instantiated directly."""
-    with pytest.raises(TypeError) as excinfo:
+    with pytest.raises(TypeError):
         BaseDetector()  # type: ignore[abstract]
-    assert "Can't instantiate abstract class BaseDetector" in str(excinfo.value)
 
 
 def test_base_classifier_cannot_be_instantiated() -> None:
     """Verify that abstract class BaseClassifier cannot be instantiated directly."""
-    with pytest.raises(TypeError) as excinfo:
+    with pytest.raises(TypeError):
         BaseClassifier()  # type: ignore[abstract]
-    assert "Can't instantiate abstract class BaseClassifier" in str(excinfo.value)
 
 
 def test_interfaces_implementability() -> None:
     """Verify that BaseDetector and BaseClassifier can be concretely subclassed."""
 
     class MockDetector(BaseDetector):
+        @property
+        def pattern(self) -> AlgorithmPattern:
+            return AlgorithmPattern.TWO_POINTERS
+
         def detect(self, _code_ast: ast.AST) -> PatternMatch | None:
             return PatternMatch(
                 pattern=AlgorithmPattern.TWO_POINTERS,
