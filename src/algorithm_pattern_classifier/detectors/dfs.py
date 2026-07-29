@@ -25,7 +25,7 @@ class DFSDetector(BaseDetector):
         best_confidence = 0.0
 
         def collect_initializations(body: list[ast.stmt]) -> dict[str, ast.AST]:
-            inits = {}
+            inits: dict[str, ast.AST] = {}
 
             class InitCollector(ast.NodeVisitor):
                 def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
