@@ -10,6 +10,10 @@ class MockDetector(BaseDetector):
         self._pattern = pattern
         self.confidence_value = confidence
 
+    @property
+    def pattern(self) -> AlgorithmPattern:
+        return self._pattern
+
     def detect(self, _code_ast: ast.AST) -> PatternMatch | None:
         if self.confidence_value <= 0.0:
             return None
@@ -91,6 +95,9 @@ def test_classifier_overlap_handling() -> None:
 def test_classifier_dp_suppresses_dfs() -> None:
     """Test that dynamic programming suppresses DFS when confidence is high enough."""
     detectors: list[BaseDetector] = [
+        # Note: Dynamic programming is more specific than DFS. Under default rules,
+        # a DP match with confidence >= 0.5 completely suppresses DFS,
+        # meaning specificity deliberately outranks raw confidence.
         MockDetector(AlgorithmPattern.DYNAMIC_PROGRAMMING, 0.8),
         MockDetector(AlgorithmPattern.DFS, 0.9),
     ]

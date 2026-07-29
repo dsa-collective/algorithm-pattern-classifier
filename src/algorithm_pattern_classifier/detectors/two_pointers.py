@@ -7,6 +7,10 @@ from algorithm_pattern_classifier.models.patterns import AlgorithmPattern, Patte
 class TwoPointersDetector(BaseDetector):
     """Detector for the Two Pointers algorithmic design pattern."""
 
+    @property
+    def pattern(self) -> AlgorithmPattern:
+        return AlgorithmPattern.TWO_POINTERS
+
     def detect(self, code_ast: ast.AST) -> PatternMatch | None:
         """Parse AST and detect Two Pointers pattern.
 
