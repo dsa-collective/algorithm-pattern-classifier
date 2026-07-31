@@ -42,8 +42,8 @@ def main() -> None:
             json_results = [
                 {
                     "pattern": res.pattern.value,
-                    "confidence_score": res.confidence_score,
-                    "supporting_evidence": res.supporting_evidence,
+                    "confidence_score": res.confidence,
+                    "supporting_evidence": res.evidence,
                 }
                 for res in results
             ]
@@ -59,10 +59,10 @@ def main() -> None:
                 print("Detected Patterns:")
                 for res in results:
                     print(f"  - Pattern:    {res.pattern.value.upper()}")
-                    print(f"    Confidence: {res.confidence_score * 100:.1f}%")
-                    if res.supporting_evidence:
+                    print(f"    Confidence: {res.confidence * 100:.1f}%")
+                    if res.evidence:
                         print("    Evidence:")
-                        for evidence in res.supporting_evidence:
+                        for evidence in res.evidence:
                             print(f"      * {evidence}")
                     print()
 

@@ -1,3 +1,5 @@
+import ast
+
 from algorithm_pattern_classifier.detectors.dynamic_programming import DynamicProgrammingDetector
 
 
@@ -14,9 +16,10 @@ def test_dp_detector_memoized_positives() -> None:
         "        return n\n"
         "    return fib(n-1) + fib(n-2)\n"
     )
-    result = detector.detect(fib_decorator)
-    assert result.confidence_score > 0.8
-    assert "cache" in result.supporting_evidence[0] or "lru_cache" in result.supporting_evidence[0]
+    result = detector.detect(ast.parse(fib_decorator))
+    assert result is not None
+    assert result.confidence > 0.8
+    assert "cache" in result.evidence[0] or "lru_cache" in result.evidence[0]
 
     # Case 2: Fibonacci with manual memoization dict
     fib_manual = (
@@ -29,9 +32,10 @@ def test_dp_detector_memoized_positives() -> None:
         "    memo[n] = fib(n-1) + fib(n-2)\n"
         "    return memo[n]\n"
     )
-    result = detector.detect(fib_manual)
-    assert result.confidence_score > 0.8
-    assert "manual cache" in result.supporting_evidence[0]
+    result = detector.detect(ast.parse(fib_manual))
+    assert result is not None
+    assert result.confidence > 0.8
+    assert "manual cache" in result.evidence[0]
 
 
 def test_dp_detector_tabulation_positives() -> None:
@@ -49,10 +53,11 @@ def test_dp_detector_tabulation_positives() -> None:
         "        dp[i] = dp[i-1] + dp[i-2]\n"
         "    return dp[n]\n"
     )
-    result = detector.detect(fib_tab)
-    assert result.confidence_score > 0.8
-    assert "tabulation" in result.supporting_evidence[0]
-    assert "dp" in result.supporting_evidence[0]
+    result = detector.detect(ast.parse(fib_tab))
+    assert result is not None
+    assert result.confidence > 0.8
+    assert "tabulation" in result.evidence[0]
+    assert "dp" in result.evidence[0]
 
     # Case 2: 0/1 Knapsack tabulated (2D)
     knapsack_tab = (
@@ -68,10 +73,11 @@ def test_dp_detector_tabulation_positives() -> None:
         "                dp[i][w] = dp[i-1][w]\n"
         "    return dp[n][W]\n"
     )
-    result = detector.detect(knapsack_tab)
-    assert result.confidence_score > 0.8
-    assert "tabulation" in result.supporting_evidence[0]
-    assert "dp" in result.supporting_evidence[0]
+    result = detector.detect(ast.parse(knapsack_tab))
+    assert result is not None
+    assert result.confidence > 0.8
+    assert "tabulation" in result.evidence[0]
+    assert "dp" in result.evidence[0]
 
     # Case 3: Longest Common Subsequence tabulated (2D)
     lcs_tab = (
@@ -89,10 +95,11 @@ def test_dp_detector_tabulation_positives() -> None:
         "                L[i][j] = max(L[i-1][j], L[i][j-1])\n"
         "    return L[m][n]\n"
     )
-    result = detector.detect(lcs_tab)
-    assert result.confidence_score > 0.8
-    assert "tabulation" in result.supporting_evidence[0]
-    assert "L" in result.supporting_evidence[0]
+    result = detector.detect(ast.parse(lcs_tab))
+    assert result is not None
+    assert result.confidence > 0.8
+    assert "tabulation" in result.evidence[0]
+    assert "L" in result.evidence[0]
 
 
 def test_dp_detector_negatives() -> None:
@@ -101,8 +108,8 @@ def test_dp_detector_negatives() -> None:
 
     # Case 1: Plain (non-memoized) recursion
     plain_recursion = "def recurse(n):\n    if n <= 1:\n        return n\n    return recurse(n-1)\n"
-    result = detector.detect(plain_recursion)
-    assert result.confidence_score == 0.0
+    result = detector.detect(ast.parse(plain_recursion))
+    assert result is None
 
     # Case 2: Simple loop with no prior table entry lookup
     simple_loop = (
@@ -112,5 +119,5 @@ def test_dp_detector_negatives() -> None:
         "        out[i] = arr[i] * 2\n"
         "    return out\n"
     )
-    result = detector.detect(simple_loop)
-    assert result.confidence_score == 0.0
+    result = detector.detect(ast.parse(simple_loop))
+    assert result is None

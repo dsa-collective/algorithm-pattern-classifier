@@ -1,8 +1,7 @@
+import ast
 from abc import ABC, abstractmethod
-from typing import Any
 
-from algorithm_pattern_classifier.models.pattern import AlgorithmPattern
-from algorithm_pattern_classifier.models.result import ClassificationResult
+from algorithm_pattern_classifier.models.patterns import AlgorithmPattern, PatternMatch
 
 
 class BaseDetector(ABC):
@@ -11,18 +10,17 @@ class BaseDetector(ABC):
     @property
     @abstractmethod
     def pattern(self) -> AlgorithmPattern:
-        """The algorithmic design pattern this detector is designed to identify."""
+        """The AlgorithmPattern that this detector is designed to detect."""
         pass
 
     @abstractmethod
-    def detect(self, source_code: str, ast_tree: Any = None) -> ClassificationResult:
-        """Detect evidence of the specific pattern in the source code.
+    def detect(self, code_ast: ast.AST) -> PatternMatch | None:
+        """Detect evidence of the specific pattern in the AST.
 
         Args:
-            source_code: The raw source code of the solution.
-            ast_tree: Optional pre-parsed AST of the source code.
+            code_ast: The parsed Abstract Syntax Tree (AST) of the source code.
 
         Returns:
-            A ClassificationResult representing the detection outcome.
+            A PatternMatch object if the pattern is detected, or None otherwise.
         """
         pass

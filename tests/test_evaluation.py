@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 
 from algorithm_pattern_classifier.classifiers.pattern_classifier import PatternClassifier
-from algorithm_pattern_classifier.models.pattern import AlgorithmPattern
+from algorithm_pattern_classifier.models.patterns import AlgorithmPattern
 
 
 def test_corpus_regression_evaluation() -> None:
@@ -14,7 +14,7 @@ def test_corpus_regression_evaluation() -> None:
 
     # Map directory names to expected pattern enums
     label_map = {
-        "two_pointer": AlgorithmPattern.TWO_POINTER,
+        "two_pointer": AlgorithmPattern.TWO_POINTERS,
         "sliding_window": AlgorithmPattern.SLIDING_WINDOW,
         "dynamic_programming": AlgorithmPattern.DYNAMIC_PROGRAMMING,
         "negatives": None,
@@ -41,7 +41,7 @@ def test_corpus_regression_evaluation() -> None:
 
             # Get the top classification result if confidence is high enough
             top_result = None
-            if results and results[0].confidence_score >= 0.5:
+            if results and results[0].confidence >= 0.5:
                 top_result = results[0].pattern
 
             sys.stdout.write(

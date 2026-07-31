@@ -1,6 +1,5 @@
 """Models sub-package."""
 
-from algorithm_pattern_classifier.models.pattern import AlgorithmPattern
-from algorithm_pattern_classifier.models.result import ClassificationResult
+from algorithm_pattern_classifier.models.patterns import AlgorithmPattern, PatternMatch
 
-__all__ = ["AlgorithmPattern", "ClassificationResult"]
+__all__ = ["AlgorithmPattern", "PatternMatch"]

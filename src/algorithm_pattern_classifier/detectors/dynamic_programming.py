@@ -1,9 +1,7 @@
 import ast
-from typing import Any
 
 from algorithm_pattern_classifier.interfaces.detector import BaseDetector
-from algorithm_pattern_classifier.models.pattern import AlgorithmPattern
-from algorithm_pattern_classifier.models.result import ClassificationResult
+from algorithm_pattern_classifier.models.patterns import AlgorithmPattern, PatternMatch
 
 
 class DynamicProgrammingDetector(BaseDetector):
@@ -13,26 +11,15 @@ class DynamicProgrammingDetector(BaseDetector):
     def pattern(self) -> AlgorithmPattern:
         return AlgorithmPattern.DYNAMIC_PROGRAMMING
 
-    def detect(self, source_code: str, ast_tree: Any = None) -> ClassificationResult:
-        """Detect evidence of the Dynamic Programming pattern in source code.
+    def detect(self, code_ast: ast.AST) -> PatternMatch | None:
+        """Detect evidence of the Dynamic Programming pattern in parsed AST.
 
         Args:
-            source_code: The raw source code of the solution.
-            ast_tree: Optional pre-parsed AST of the source code.
+            code_ast: The parsed AST of the source code.
 
         Returns:
-            A ClassificationResult representing the detection outcome.
+            A PatternMatch representing the detection outcome, or None.
         """
-        if ast_tree is None:
-            try:
-                ast_tree = ast.parse(source_code)
-            except SyntaxError:
-                return ClassificationResult(
-                    pattern=self.pattern,
-                    confidence_score=0.0,
-                    supporting_evidence=["Syntax error during parsing"],
-                )
-
         evidence: list[str] = []
         max_confidence = 0.0
 
@@ -223,14 +210,15 @@ class DynamicProgrammingDetector(BaseDetector):
                     )
 
         visitor = DPVisitor()
-        visitor.visit(ast_tree)
+        visitor.visit(code_ast)
 
         if visitor.found_dp:
             max_confidence = visitor.confidence
             evidence = visitor.evidence
+            return PatternMatch(
+                pattern=AlgorithmPattern.DYNAMIC_PROGRAMMING,
+                confidence=max_confidence,
+                evidence=evidence,
+            )
 
-        return ClassificationResult(
-            pattern=self.pattern,
-            confidence_score=max_confidence,
-            supporting_evidence=evidence,
-        )
+        return None

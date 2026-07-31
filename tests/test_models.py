@@ -1,47 +1,74 @@
-from typing import Any
+import ast
+from dataclasses import FrozenInstanceError
+
+import pytest
 
 from algorithm_pattern_classifier.interfaces.classifier import BaseClassifier
 from algorithm_pattern_classifier.interfaces.detector import BaseDetector
-from algorithm_pattern_classifier.models.pattern import AlgorithmPattern
-from algorithm_pattern_classifier.models.result import ClassificationResult
+from algorithm_pattern_classifier.models.patterns import AlgorithmPattern, PatternMatch
 
 
 def test_algorithm_pattern_enum() -> None:
     """Test AlgorithmPattern enum members and values."""
-    assert len(AlgorithmPattern) >= 6
-    assert AlgorithmPattern.TWO_POINTER.value == "two-pointer"
+    assert AlgorithmPattern.TWO_POINTERS.value == "two-pointers"
     assert AlgorithmPattern.SLIDING_WINDOW.value == "sliding-window"
     assert AlgorithmPattern.DYNAMIC_PROGRAMMING.value == "dynamic-programming"
     assert AlgorithmPattern.BACKTRACKING.value == "backtracking"
-    assert AlgorithmPattern.BFS_DFS.value == "bfs-dfs"
-    assert AlgorithmPattern.GREEDY.value == "greedy"
+    assert AlgorithmPattern.FAST_SLOW_POINTERS.value == "fast-slow-pointers"
     assert AlgorithmPattern.DIVIDE_AND_CONQUER.value == "divide-and-conquer"
-    assert AlgorithmPattern.BINARY_SEARCH.value == "binary-search"
+    assert AlgorithmPattern.BFS.value == "bfs"
+    assert AlgorithmPattern.DFS.value == "dfs"
+    assert AlgorithmPattern.GREEDY.value == "greedy"
 
 
-def test_classification_result_construction_and_equality() -> None:
-    """Test ClassificationResult construction, defaults, and value equality."""
-    result1 = ClassificationResult(
-        pattern=AlgorithmPattern.TWO_POINTER,
-        confidence_score=0.85,
-        supporting_evidence=["line 10: left, right pointers initialized"],
+def test_pattern_match_construction_and_equality() -> None:
+    """Test PatternMatch construction and value equality."""
+    result1 = PatternMatch(
+        pattern=AlgorithmPattern.TWO_POINTERS,
+        confidence=0.85,
+        evidence=["line 10: left, right pointers initialized"],
     )
-    result2 = ClassificationResult(
-        pattern=AlgorithmPattern.TWO_POINTER,
-        confidence_score=0.85,
-        supporting_evidence=["line 10: left, right pointers initialized"],
+    result2 = PatternMatch(
+        pattern=AlgorithmPattern.TWO_POINTERS,
+        confidence=0.85,
+        evidence=["line 10: left, right pointers initialized"],
     )
 
     assert result1 == result2
-    assert result1.pattern == AlgorithmPattern.TWO_POINTER
-    assert result1.confidence_score == 0.85
-    assert len(result1.supporting_evidence) == 1
+    assert result1.pattern == AlgorithmPattern.TWO_POINTERS
+    assert result1.confidence == 0.85
+    assert len(result1.evidence) == 1
 
-    # Test defaults
-    result_default = ClassificationResult(
-        pattern=AlgorithmPattern.BINARY_SEARCH, confidence_score=0.5
+
+def test_pattern_match_defaults() -> None:
+    """Test that PatternMatch defaults evidence to an empty list."""
+    result = PatternMatch(
+        pattern=AlgorithmPattern.TWO_POINTERS,
+        confidence=0.85,
     )
-    assert result_default.supporting_evidence == []
+    assert result.evidence == []
+
+
+def test_pattern_match_immutability() -> None:
+    """Test that PatternMatch is frozen and cannot be mutated."""
+    result = PatternMatch(
+        pattern=AlgorithmPattern.TWO_POINTERS,
+        confidence=0.85,
+    )
+    with pytest.raises(FrozenInstanceError):
+        result.confidence = 0.95  # type: ignore[misc]
+
+
+def test_base_detector_cannot_be_instantiated() -> None:
+    """Verify that abstract class BaseDetector cannot be instantiated directly."""
+    with pytest.raises(TypeError):
+        BaseDetector()  # type: ignore[abstract]
+
+
+def test_base_classifier_cannot_be_instantiated() -> None:
+    """Verify that abstract class BaseClassifier cannot be instantiated directly."""
+    with pytest.raises(TypeError):
+        BaseClassifier()  # type: ignore[abstract]
 
 
 def test_interfaces_implementability() -> None:
@@ -50,33 +77,32 @@ def test_interfaces_implementability() -> None:
     class MockDetector(BaseDetector):
         @property
         def pattern(self) -> AlgorithmPattern:
-            return AlgorithmPattern.TWO_POINTER
+            return AlgorithmPattern.TWO_POINTERS
 
-        def detect(self, source_code: str, ast_tree: Any = None) -> ClassificationResult:
-            _ = source_code, ast_tree
-            return ClassificationResult(
-                pattern=self.pattern,
-                confidence_score=1.0,
-                supporting_evidence=["found while loop with left < right"],
+        def detect(self, _code_ast: ast.AST) -> PatternMatch | None:
+            return PatternMatch(
+                pattern=AlgorithmPattern.TWO_POINTERS,
+                confidence=1.0,
+                evidence=["found while loop with left < right"],
             )
 
     class MockClassifier(BaseClassifier):
-        def classify(self, source_code: str) -> list[ClassificationResult]:
+        def classify(self, source_code: str) -> list[PatternMatch]:
             _ = source_code
             return [
-                ClassificationResult(
-                    pattern=AlgorithmPattern.TWO_POINTER,
-                    confidence_score=1.0,
-                    supporting_evidence=["mocked"],
+                PatternMatch(
+                    pattern=AlgorithmPattern.TWO_POINTERS,
+                    confidence=1.0,
+                    evidence=["mocked"],
                 )
             ]
 
     detector = MockDetector()
-    assert detector.pattern == AlgorithmPattern.TWO_POINTER
-    det_res = detector.detect("while left < right:")
-    assert det_res.confidence_score == 1.0
+    det_res = detector.detect(ast.parse("while left < right:\n    pass"))
+    assert det_res is not None
+    assert det_res.confidence == 1.0
 
     classifier = MockClassifier()
     cls_res = classifier.classify("code")
     assert len(cls_res) == 1
-    assert cls_res[0].pattern == AlgorithmPattern.TWO_POINTER
+    assert cls_res[0].pattern == AlgorithmPattern.TWO_POINTERS
