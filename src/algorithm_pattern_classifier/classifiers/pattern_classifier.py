@@ -18,7 +18,8 @@ class PatternClassifier(BaseClassifier):
 
         Args:
             detectors: A list of detectors. If None, defaults to registering
-                       TwoPointersDetector, SlidingWindowDetector, and DynamicProgrammingDetector.
+                       TwoPointersDetector, SlidingWindowDetector, DynamicProgrammingDetector,
+                       BFSDetector, and DFSDetector.
         """
         if detectors is None:
             self.detectors: list[BaseDetector] = [

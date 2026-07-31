@@ -119,18 +119,14 @@ class DFSDetector(BaseDetector):
                                             self.pop_line = getattr(child, "lineno", 0)
                                         elif len(child.args) == 1:
                                             arg = child.args[0]
-                                            if isinstance(arg, ast.UnaryOp) and isinstance(
-                                                arg.op, ast.USub
+                                            if (
+                                                isinstance(arg, ast.UnaryOp)
+                                                and isinstance(arg.op, ast.USub)
+                                                and isinstance(arg.operand, ast.Constant)
+                                                and arg.operand.value == 1
                                             ):
-                                                if (
-                                                    isinstance(arg.operand, ast.Constant)
-                                                    and arg.operand.value == 1
-                                                ):
-                                                    self.has_pop_back = True
-                                                    self.pop_line = getattr(child, "lineno", 0)
-                                            elif isinstance(arg, ast.Constant) and arg.value == -1:
                                                 self.has_pop_back = True
-                                                self.pop_line = child.lineno
+                                                self.pop_line = getattr(child, "lineno", 0)
                                     elif func.attr in ("append", "extend"):
                                         self.has_append = True
                                         self.append_line = child.lineno
@@ -152,10 +148,9 @@ class DFSDetector(BaseDetector):
                                     has_visited_check = True
                                     break
 
-                            confidence = 0.85
+                            confidence = 0.80
                             if has_visited_check:
-                                confidence += 0.05
-                            confidence += 0.05  # Pop/append on the same stack variable
+                                confidence += 0.10
 
                             self.confidence = max(self.confidence, min(0.95, confidence))
                             init_line = getattr(self.initialized_stacks[stack_var], "lineno", 0)
@@ -173,7 +168,21 @@ class DFSDetector(BaseDetector):
             ) -> None:
                 func_name = func_node.name
 
-                class RecursiveDFSHerusticVisitor(ast.NodeVisitor):
+                def has_recursive_call(val_node: ast.AST) -> bool:
+                    for sub in ast.walk(val_node):
+                        if isinstance(sub, ast.Call) and (
+                            (isinstance(sub.func, ast.Name) and sub.func.id == func_name)
+                            or (
+                                isinstance(sub.func, ast.Attribute)
+                                and isinstance(sub.func.value, ast.Name)
+                                and sub.func.value.id == "self"
+                                and sub.func.attr == func_name
+                            )
+                        ):
+                            return True
+                    return False
+
+                class RecursiveDFSHeuristicVisitor(ast.NodeVisitor):
                     def __init__(self) -> None:
                         self.found_dfs = False
                         self.in_for_loop = False
@@ -190,8 +199,26 @@ class DFSDetector(BaseDetector):
 
                     def visit_Assign(self, node: ast.Assign) -> None:
                         for target in node.targets:
-                            if isinstance(target, ast.Subscript):
+                            if isinstance(target, ast.Subscript) and not has_recursive_call(
+                                node.value
+                            ):
                                 self.has_grid_marking = True
+                        self.generic_visit(node)
+
+                    def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
+                        if (
+                            isinstance(node.target, ast.Subscript)
+                            and node.value
+                            and not has_recursive_call(node.value)
+                        ):
+                            self.has_grid_marking = True
+                        self.generic_visit(node)
+
+                    def visit_AugAssign(self, node: ast.AugAssign) -> None:
+                        if isinstance(node.target, ast.Subscript) and not has_recursive_call(
+                            node.value
+                        ):
+                            self.has_grid_marking = True
                         self.generic_visit(node)
 
                     def visit_For(self, node: ast.For) -> None:
@@ -216,7 +243,7 @@ class DFSDetector(BaseDetector):
                                 self.recursive_calls_in_for.append(node)
                         self.generic_visit(node)
 
-                visitor = RecursiveDFSHerusticVisitor()
+                visitor = RecursiveDFSHeuristicVisitor()
                 visitor.visit(func_node)
 
                 if visitor.all_recursive_calls:
@@ -230,7 +257,7 @@ class DFSDetector(BaseDetector):
 
                     if is_dfs:
                         self.found_dfs = True
-                        confidence = 0.85
+                        confidence = 0.80
                         if visitor.has_visited_or_seen:
                             confidence += 0.05
                         if visitor.recursive_calls_in_for:

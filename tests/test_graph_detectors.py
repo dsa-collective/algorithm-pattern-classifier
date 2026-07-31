@@ -22,10 +22,10 @@ def test_bfs_detector_positives() -> None:
     )
     result = detector.detect(ast.parse(deque_bfs_code))
     assert result is not None
-    assert result.confidence == 0.95
+    assert result.confidence == 0.90
     assert "bfs" in result.evidence[0].lower()
 
-    # Case 2: BFS queue using standard list, pop(0) and extend (no visited check, confidence 0.90)
+    # Case 2: BFS queue using standard list, pop(0) and extend (no visited check, confidence 0.80)
     list_bfs_code = (
         "def bfs_list(graph, start):\n"
         "    queue = [start]\n"
@@ -35,7 +35,7 @@ def test_bfs_detector_positives() -> None:
     )
     result2 = detector.detect(ast.parse(list_bfs_code))
     assert result2 is not None
-    assert result2.confidence == 0.90
+    assert result2.confidence == 0.80
 
 
 def test_bfs_detector_negatives() -> None:
@@ -72,7 +72,7 @@ def test_dfs_detector_positives() -> None:
     )
     result = detector.detect(ast.parse(iter_dfs_code))
     assert result is not None
-    assert result.confidence == 0.95
+    assert result.confidence == 0.90
 
     # Case 2: Recursive DFS
     recur_dfs_code = (
@@ -84,7 +84,7 @@ def test_dfs_detector_positives() -> None:
     )
     result2 = detector.detect(ast.parse(recur_dfs_code))
     assert result2 is not None
-    assert result2.confidence == 0.95
+    assert result2.confidence == 0.90
 
 
 def test_dfs_detector_negatives() -> None:
@@ -132,6 +132,32 @@ def test_dfs_detector_negatives() -> None:
     )
     result4 = detector.detect(ast.parse(bsearch_code))
     assert result4 is None
+
+    # Case 5: Fibonacci with decorator memoization (DP, not DFS)
+    fib_decorator = (
+        "from functools import cache\n"
+        "@cache\n"
+        "def fib(n):\n"
+        "    if n < 2:\n"
+        "        return n\n"
+        "    return fib(n-1) + fib(n-2)\n"
+    )
+    result5 = detector.detect(ast.parse(fib_decorator))
+    assert result5 is None
+
+    # Case 6: Fibonacci with manual memoization dict (DP, not DFS)
+    fib_manual = (
+        "memo = {}\n"
+        "def fib(n):\n"
+        "    if n in memo:\n"
+        "        return memo[n]\n"
+        "    if n < 2:\n"
+        "        return n\n"
+        "    memo[n] = fib(n-1) + fib(n-2)\n"
+        "    return memo[n]\n"
+    )
+    result6 = detector.detect(ast.parse(fib_manual))
+    assert result6 is None
 
 
 def test_graph_detectors_module_level() -> None:

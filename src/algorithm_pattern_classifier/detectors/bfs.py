@@ -140,10 +140,9 @@ class BFSDetector(BaseDetector):
                                     has_visited_check = True
                                     break
 
-                            confidence = 0.85
+                            confidence = 0.80
                             if has_visited_check:
-                                confidence += 0.05
-                            confidence += 0.05  # Pop/append on the same queue variable
+                                confidence += 0.10
 
                             self.confidence = max(self.confidence, min(0.95, confidence))
                             init_line = getattr(self.initialized_queues[queue_var], "lineno", 0)
