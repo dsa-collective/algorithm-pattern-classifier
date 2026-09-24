@@ -17,10 +17,11 @@ def test_ast_normalizer_tuple_unpacking() -> None:
     assert len(normalized.body) == 2
     assert isinstance(normalized.body[0], ast.Assign)
     assert isinstance(normalized.body[0].targets[0], ast.Name)
-    assert normalized.body[0].targets[0].id == "left"
+    # variables are canonicalized
+    assert normalized.body[0].targets[0].id == "var_0"
     assert isinstance(normalized.body[1], ast.Assign)
     assert isinstance(normalized.body[1].targets[0], ast.Name)
-    assert normalized.body[1].targets[0].id == "right"
+    assert normalized.body[1].targets[0].id == "var_1"
 
 
 def test_ast_normalizer_non_tuple_unpacking() -> None:
@@ -115,3 +116,29 @@ def test_two_pointers_swap_integration() -> None:
     assert len(results) > 0
     assert results[0].pattern == AlgorithmPattern.TWO_POINTERS
     assert results[0].confidence >= 0.8
+
+
+def test_ast_normalizer_canonical_renaming_identical_structure() -> None:
+    """Test identical algorithms with different variable names produce identical ASTs."""
+    code1 = """
+def reverse_array(arr):
+    left, right = 0, len(arr) - 1
+    while left < right:
+        arr[left], arr[right] = arr[right], arr[left]
+        left += 1
+        right -= 1
+    return arr
+"""
+    code2 = """
+def backwards_array(a):
+    i, j = 0, len(a) - 1
+    while i < j:
+        a[i], a[j] = a[j], a[i]
+        i += 1
+        j -= 1
+    return a
+"""
+    tree1 = ASTNormalizer().visit(ast.parse(code1))
+    tree2 = ASTNormalizer().visit(ast.parse(code2))
+
+    assert ast.dump(tree1) == ast.dump(tree2)
