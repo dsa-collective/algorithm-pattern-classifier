@@ -1,4 +1,6 @@
 import ast
+from collections.abc import Sequence
+from typing import Any
 
 
 class ASTNormalizer(ast.NodeTransformer):
@@ -10,15 +12,15 @@ class ASTNormalizer(ast.NodeTransformer):
     the original variable names used.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
-        self.scopes = [{}]
+        self.scopes: list[dict[str, str]] = [{}]
         self.var_counter = 0
 
-    def push_scope(self):
+    def push_scope(self) -> None:
         self.scopes.append({})
 
-    def pop_scope(self):
+    def pop_scope(self) -> None:
         self.scopes.pop()
 
     def declare_var(self, name: str) -> str:
@@ -35,7 +37,7 @@ class ASTNormalizer(ast.NodeTransformer):
                 return scope[name]
         return name
 
-    def _visit_list(self, nodes: list[ast.AST]) -> list[ast.AST]:
+    def _visit_list(self, nodes: Sequence[Any]) -> list[Any]:
         result = []
         for n in nodes:
             res = self.visit(n)
