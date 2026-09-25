@@ -80,9 +80,7 @@ class ASTNormalizer(ast.NodeTransformer):
 
         node.name = self.declare_var(node.name)
 
-        self.push_scope()
         node.body = self._visit_list(node.body)
-        self.pop_scope()
         return node
 
     def visit_Lambda(self, node: ast.Lambda) -> ast.AST:
